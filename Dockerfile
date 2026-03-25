@@ -9,9 +9,7 @@ RUN npm ci
 
 # Copy source and compile
 COPY tsconfig.json ./
-COPY prisma/ ./prisma/
 COPY src/ ./src/
-RUN npx prisma generate
 RUN npm run build
 
 # ─── Stage 2: Production ──────────────────────────────────────────────────────
@@ -24,10 +22,6 @@ ENV NODE_ENV=production
 # Only install production dependencies
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-
-# Generate Prisma client in the production image (ensures runtime has the client)
-COPY prisma/ ./prisma/
-RUN npx prisma generate
 
 # Copy compiled output
 COPY --from=builder /app/dist ./dist

@@ -51,9 +51,6 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Prisma generate
-        run: npm run prisma:generate
-
       - name: Typecheck
         run: npm run typecheck
 

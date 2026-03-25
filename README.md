@@ -5,7 +5,7 @@ Webhook-driven task processing pipeline built with:
 - Node.js + TypeScript
 - Express (API)
 - BullMQ (Redis-backed queue)
-- Prisma (PostgreSQL ORM)
+- Drizzle ORM (PostgreSQL)
 - A background worker process for delivery + retries
 
 ## Architecture
@@ -76,7 +76,7 @@ docker compose up --build
 What happens:
 
 - `postgres` and `redis` containers start
-- `migrate` runs once: `prisma generate` + `prisma db push`
+- `migrate` runs once: applies SQL migrations from `migrations/`
 - `api` starts on port `3000`
 - `worker` starts and begins processing queue jobs
 
@@ -111,19 +111,13 @@ docker compose up -d postgres redis
 npm install
 ```
 
-### 3) Generate Prisma client
+### 3) Run database migrations
 
 ```bash
-npm run prisma:generate
+npm run migrate
 ```
 
-### 4) Initialize / sync database schema
-
-```bash
-npm run db:push
-```
-
-### 5) Run the API
+### 4) Run the API
 
 ```bash
 npm run dev
@@ -131,7 +125,7 @@ npm run dev
 
 API will listen on `http://localhost:3000` by default.
 
-### 6) Run the worker (in a second terminal)
+### 5) Run the worker (in a second terminal)
 
 ```bash
 npm run dev:worker
@@ -149,10 +143,8 @@ npm run dev:worker
   - Run compiled API (`node dist/index.js`)
 - `npm run start:worker`
   - Run compiled worker
-- `npm run prisma:generate`
-  - Generate Prisma client
-- `npm run db:push`
-  - Apply Prisma schema to DB (development-friendly)
+- `npm run migrate`
+  - Apply SQL migrations from `migrations/`
 - `npm run typecheck`
   - Run TypeScript type checking
 - `npm test`
@@ -175,15 +167,6 @@ Other routes are mounted under:
 
 ## Troubleshooting
 
-### `Cannot find module '@prisma/client'`
-
-This means dependencies are missing or Prisma Client was not generated.
-
-```bash
-npm install
-npm run prisma:generate
-```
-
 ### `npm ci` fails with “package-lock.json out of sync”
 
 Run:
@@ -196,7 +179,3 @@ Then commit the updated `package-lock.json`.
 
 This is especially important for Docker builds, because the `Dockerfile` uses `npm ci`.
 
-### Prisma update notice
-
-You may see a message about an available Prisma major upgrade (e.g. `6.x -> 7.x`).
-Only upgrade if you intend to, and follow the Prisma major upgrade guide.

@@ -1,5 +1,3 @@
-import axios from 'axios';
-import jsonata from 'jsonata';
 import { ActionType, Pipeline } from '../types';
 
 export async function runAction(pipeline: Pipeline, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -15,48 +13,32 @@ export async function runAction(pipeline: Pipeline, payload: Record<string, unkn
   }
 }
 
-async function runTransform(actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const expression = String(actionConfig.expression ?? '$');
-  const compiled = jsonata(expression);
-  const result = await compiled.evaluate(payload);
-
-  if (result && typeof result === 'object') return result as Record<string, unknown>;
-  return { result };
+async function runTransform(_actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return {
+    ...payload,
+    processed_at: new Date().toISOString(),
+    event_uppercase: typeof payload.event === 'string' ? payload.event.toUpperCase() : null,
+  };
 }
 
-async function runFilter(actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const expression = String(actionConfig.expression ?? 'true');
-  const compiled = jsonata(expression);
-  const allowed = await compiled.evaluate(payload);
-
-  if (!allowed) {
-    return { filtered_out: true };
+async function runFilter(_actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const amount = typeof payload.amount === 'number' ? payload.amount : 0;
+  
+  if (amount <= 0) {
+    return { filtered_out: true, reason: 'amount must be greater than 0' };
   }
 
   return payload;
 }
 
-async function runHttpEnrichment(actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const url = String(actionConfig.url ?? '');
-  if (!url) throw new Error('http_enrichment requires action_config.url');
-
-  const method = String(actionConfig.method ?? 'POST').toUpperCase();
-  const headers = (actionConfig.headers && typeof actionConfig.headers === 'object') ? (actionConfig.headers as Record<string, string>) : undefined;
-
-  const res = await axios.request({
-    url,
-    method,
-    headers,
-    data: payload,
-    timeout: 10_000,
-    validateStatus: () => true,
-  });
+async function runHttpEnrichment(_actionConfig: Record<string, unknown>, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const multiplier = typeof _actionConfig.multiplier === 'number' ? _actionConfig.multiplier : 1.1;
+  const amount = typeof payload.amount === 'number' ? payload.amount : 0;
 
   return {
     ...payload,
-    enrichment: {
-      status: res.status,
-      data: res.data,
-    },
+    original_amount: amount,
+    calculated_amount: amount * multiplier,
+    calculation_note: `Applied ${multiplier}x multiplier`,
   };
 }

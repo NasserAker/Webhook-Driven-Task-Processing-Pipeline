@@ -10,6 +10,7 @@ RUN npm ci
 # Copy source and compile
 COPY tsconfig.json ./
 COPY src/ ./src/
+COPY migrations/ ./migrations/
 RUN npm run build
 
 # ─── Stage 2: Production ──────────────────────────────────────────────────────

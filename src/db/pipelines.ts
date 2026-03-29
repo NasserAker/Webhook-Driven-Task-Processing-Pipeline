@@ -1,4 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import { db } from './drizzle';
 import { pipelines } from './schema';
 import { CreatePipelineInput, Pipeline, UpdatePipelineInput } from '../types';
@@ -17,6 +18,7 @@ export async function createPipeline(input: CreatePipelineInput): Promise<Pipeli
     .values({
       name: input.name,
       description: input.description ?? null,
+      source_id: randomUUID(),
       action_type: input.action_type,
       action_config: input.action_config ?? {},
       is_active: true,

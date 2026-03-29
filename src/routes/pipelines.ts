@@ -25,6 +25,8 @@ const createSubscriberSchema = z.object({
   secret: z.string().optional(),
 });
 
+const uuidParamSchema = z.string().uuid();
+
 router.get('/', async (_req, res, next) => {
   try {
     const pipelines = await listPipelines();
@@ -46,7 +48,8 @@ router.post('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const pipeline = await getPipelineById(req.params.id);
+    const id = uuidParamSchema.parse(req.params.id);
+    const pipeline = await getPipelineById(id);
     if (!pipeline) {
       res.status(404).json({ error: 'NOT_FOUND', message: 'Pipeline not found' });
       return;
@@ -59,8 +62,9 @@ router.get('/:id', async (req, res, next) => {
 
 router.patch('/:id', async (req, res, next) => {
   try {
+    const id = uuidParamSchema.parse(req.params.id);
     const input = updatePipelineSchema.parse(req.body);
-    const pipeline = await updatePipeline(req.params.id, input);
+    const pipeline = await updatePipeline(id, input);
     if (!pipeline) {
       res.status(404).json({ error: 'NOT_FOUND', message: 'Pipeline not found' });
       return;
@@ -73,7 +77,8 @@ router.patch('/:id', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const ok = await deletePipeline(req.params.id);
+    const id = uuidParamSchema.parse(req.params.id);
+    const ok = await deletePipeline(id);
     if (!ok) {
       res.status(404).json({ error: 'NOT_FOUND', message: 'Pipeline not found' });
       return;
@@ -86,7 +91,8 @@ router.delete('/:id', async (req, res, next) => {
 
 router.get('/:id/subscribers', async (req, res, next) => {
   try {
-    const subs = await listSubscribersByPipelineId(req.params.id);
+    const id = uuidParamSchema.parse(req.params.id);
+    const subs = await listSubscribersByPipelineId(id);
     res.json({ data: subs });
   } catch (err) {
     next(err);
@@ -95,8 +101,9 @@ router.get('/:id/subscribers', async (req, res, next) => {
 
 router.post('/:id/subscribers', async (req, res, next) => {
   try {
+    const id = uuidParamSchema.parse(req.params.id);
     const input = createSubscriberSchema.parse(req.body);
-    const sub = await createSubscriber(req.params.id, input);
+    const sub = await createSubscriber(id, input);
     res.status(201).json({ data: sub });
   } catch (err) {
     next(err);
@@ -105,7 +112,9 @@ router.post('/:id/subscribers', async (req, res, next) => {
 
 router.delete('/:id/subscribers/:subscriberId', async (req, res, next) => {
   try {
-    const ok = await deleteSubscriber(req.params.subscriberId);
+    uuidParamSchema.parse(req.params.id);
+    const subscriberId = uuidParamSchema.parse(req.params.subscriberId);
+    const ok = await deleteSubscriber(subscriberId);
     if (!ok) {
       res.status(404).json({ error: 'NOT_FOUND', message: 'Subscriber not found' });
       return;

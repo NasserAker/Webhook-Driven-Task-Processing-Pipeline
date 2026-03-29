@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import { ZodError } from 'zod';
 import { checkDatabaseConnection } from './db/health';
 import apiRouter from './routes';
 
@@ -53,6 +54,15 @@ export function createApp() {
 
   // ─── Global error handler ─────────────────────────────────────────────────
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (err instanceof ZodError) {
+      res.status(400).json({
+        error: 'BAD_REQUEST',
+        message: 'Invalid request body',
+        details: err.issues,
+      });
+      return;
+    }
+
     console.error('[api] Unhandled error:', err);
     res.status(500).json({
       error: 'INTERNAL_ERROR',

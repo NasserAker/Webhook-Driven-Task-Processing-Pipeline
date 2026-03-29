@@ -9,6 +9,12 @@ export function getRedisConnection(): IORedis {
   connection = new IORedis(config.redisUrl, {
     maxRetriesPerRequest: null,
     enableReadyCheck: true,
+    enableOfflineQueue: false,
+    connectTimeout: 1500,
+    retryStrategy: (times) => {
+      if (times >= 3) return null;
+      return Math.min(200 * times, 1000);
+    },
   });
 
   connection.on('error', (err: Error) => {
